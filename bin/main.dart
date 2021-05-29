@@ -21,11 +21,6 @@ void main(List<String> arguments) async {
       count++;
     }
   }
-  await file.delete();
-  await file.create();
-  for (var video in videosError) {
-    await file.writeAsString(video + '\n');
-  }
   print('Finalizando');
 }
 
@@ -43,7 +38,9 @@ Future<void> downloadMp3(String link) async {
   var url = manifest?.audioOnly?.first?.url?.toString() ?? '';
   if (url.isNotEmpty) {
     printWarning('Iniciando o download do "${video.title}"');
-    final filePath = './bin/mp3/' + video.title + '.mp3'.replaceAll('|', '-');
+    final videoFileName = videoFileNameFix(
+        video.title + '.mp3'.replaceAll('|', '-').replaceAll('|', '-'));
+    final filePath = './bin/mp3/' + videoFileName;
     if (File(filePath).existsSync()) {
       printError('Video -> ${video.title} já foi baixado!');
     } else {
@@ -55,10 +52,11 @@ Future<void> downloadMp3(String link) async {
             //print('$count / $total');
           },
         );
-        printSucess(video.title + ' - Baixado com sucesso!');
+        printSucess('$videoFileName salvo com sucesso!');
       } catch (e) {
         videosError.add(link);
         printError(e.message);
+        printError(videoFileName);
       }
     }
   } else {
@@ -83,4 +81,15 @@ void printDefault(String text) {
 
 void printSucess(String text) {
   print('\x1B[32m$text\x1B[0m');
+}
+
+String videoFileNameFix(String name) {
+  var escapes = ['\'', '/', '\'', '|', '?', '<', '>', '*', ':', '"'];
+  var nameEscaped = name;
+
+  for (var escape in escapes) {
+    nameEscaped = nameEscaped.replaceAll(escape, '');
+  }
+
+  return nameEscaped;
 }

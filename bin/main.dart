@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:youtube_explode_dart/youtube_explode_dart.dart';
 
+final videosError = <String>[];
 void main(List<String> arguments) async {
   printDefault('Lendo o arquivo videos.txt');
   final file = File('./bin/videos.txt');
@@ -14,9 +15,16 @@ void main(List<String> arguments) async {
   var count = 1;
 
   for (var video in videos) {
-    printWarning('Progresso: $count/${videos.length}');
-    await downloadMp3(video);
-    count++;
+    if (video.isNotEmpty) {
+      printWarning('Progresso: $count/${videos.length}');
+      await downloadMp3(video);
+      count++;
+    }
+  }
+  await file.delete();
+  await file.create();
+  for (var video in videosError) {
+    await file.writeAsString(video + '\n');
   }
   print('Finalizando');
 }
@@ -35,30 +43,28 @@ Future<void> downloadMp3(String link) async {
   var url = manifest?.audioOnly?.first?.url?.toString() ?? '';
   if (url.isNotEmpty) {
     printWarning('Iniciando o download do "${video.title}"');
-    final filePath = './bin/mp3/' + video.title + '.mp3';
+    final filePath = './bin/mp3/' + video.title + '.mp3'.replaceAll('|', '-');
     if (File(filePath).existsSync()) {
       printError('Video -> ${video.title} já foi baixado!');
     } else {
-      await dio.download(
-        url,
-        filePath,
-        onReceiveProgress: (count, total) {
-          //print('$count / $total');
-        },
-      );
-      printSucess(video.title + ' - Baixado com sucesso!');
+      try {
+        await dio.download(
+          url,
+          filePath,
+          onReceiveProgress: (count, total) {
+            //print('$count / $total');
+          },
+        );
+        printSucess(video.title + ' - Baixado com sucesso!');
+      } catch (e) {
+        videosError.add(link);
+        printError(e.message);
+      }
     }
   } else {
     printError('${video.title} não foi encontrado');
     printError(link);
   }
-
-  printWarning(
-      '================================================================================================================================');
-  printWarning(
-      '================================================================================================================================');
-  printWarning(
-      '================================================================================================================================');
 }
 
 String getLinkId(String link) => link.replaceAll('https://youtu.be/', '');

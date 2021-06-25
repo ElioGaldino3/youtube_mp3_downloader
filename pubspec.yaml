@@ -7,7 +7,7 @@ environment:
   sdk: '>=2.10.0 <3.0.0'
 
 dependencies:
-  youtube_explode_dart: ^1.9.4
+  youtube_explode_dart: 
   dio:
 
 dev_dependencies:

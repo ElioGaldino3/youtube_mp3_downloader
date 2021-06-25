@@ -15,10 +15,14 @@ void main(List<String> arguments) async {
   var count = 1;
 
   for (var video in videos) {
-    if (video.isNotEmpty) {
-      printWarning('Progresso: $count/${videos.length}');
-      await downloadMp3(video);
-      count++;
+    try {
+      if (video.isNotEmpty) {
+        printWarning('Progresso: $count/${videos.length}');
+        await downloadMp3(video);
+        count++;
+      }
+    } catch (e) {
+      printError('Erro no vídeo -> ${getLinkId(video)}');
     }
   }
   print('Finalizando');
